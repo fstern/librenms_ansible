@@ -18,6 +18,17 @@
     - ruby-devel
     - git
 
+
+
+- name: install rubygems-update
+  gem:
+    name: rubygems-update
+    user_install: no
+    state: present
+
+- name: run rubygems-update 
+  command: update_rubygems
+
 - name: install old rack-test
   gem:
     name: rack-test

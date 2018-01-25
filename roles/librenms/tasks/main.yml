@@ -157,7 +157,7 @@
     mode: 0644
 
 - name: populate librenms database
-  command: /usr/bin/php /opt/librenms/discovery.php
+  command: /usr/bin/php /opt/librenms/build-base.php 
 
 - name: add librenms admin user
   command: "/usr/bin/php /opt/librenms/adduser.php {{ admin_user }} {{ admin_password }} 10 {{ admin_email }}"
