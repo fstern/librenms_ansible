@@ -1,0 +1,7 @@
+---
+db_user: librenms
+db_password: librenms
+admin_user: admin
+admin_email: admin@localhost
+admin_password: admin
+admin_token: 2fab5b5a50031e5bd01ab9f8c63f5331

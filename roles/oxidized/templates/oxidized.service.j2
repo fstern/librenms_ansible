@@ -1,0 +1,12 @@
+[Unit]
+Description=Oxidized - Network Device Configuration Backup Tool
+After=network-online.target multi-user.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/oxidized
+User=oxidized
+KillSignal=SIGKILL
+
+[Install]
+WantedBy=multi-user.target

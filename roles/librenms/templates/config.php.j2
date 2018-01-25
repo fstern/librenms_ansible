@@ -1,0 +1,32 @@
+<?php
+### Database config
+$config['db_host'] = 'localhost';
+$config['db_port'] = '3306';
+$config['db_user'] = 'librenms';
+$config['db_pass'] = 'librenms';
+$config['db_name'] = 'librenms';
+$config['db_socket'] = '';
+
+$config['user'] = 'librenms';
+
+# enable oxidized
+$config['oxidized']['enabled']      = TRUE;
+$config['oxidized']['url']          = 'http://127.0.0.1:8888';
+$config['oxidized']['reload_nodes'] = TRUE;
+$config['oxidized']['features']['versioning'] = true;
+
+$config[enable_syslog] = 1;
+
+### Memcached config - We use this to store realtime usage
+$config['memcached']['enable']  = TRUE;
+$config['memcached']['host']    = "localhost";
+$config['memcached']['port']    = 11211;
+
+### Default community
+$config['snmp']['community'] = array("public");
+
+### Authentication Model
+$config['auth_mechanism'] = "mysql"; # default, other options: ldap, http-auth
+
+# Uncomment the next line to disable daily updates
+$config['update'] = 0;

@@ -1,0 +1,17 @@
+---
+- name: install syslog-ng package
+  package:
+    name: syslog-ng
+    state: present
+
+- name: install syslog-ng config
+  template:
+    src: templates/syslog_ng.conf.j2
+    dest: /etc/syslog-ng/syslog-ng.conf
+  register: restart syslog-ng
+
+- name: enable syslog-ng service
+  service:
+    name: syslog-ng
+    state: started
+    enabled: true

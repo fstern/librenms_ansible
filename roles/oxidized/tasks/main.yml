@@ -1,0 +1,67 @@
+---
+- name: install epel release
+  package:
+    name: epel-release
+    state: present
+
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - cmake
+    - sqlite-devel
+    - openssl-devel
+    - libssh2-devel
+    - ruby
+    - gcc
+    - ruby-devel
+    - git
+
+- name: install old rack-test
+  gem:
+    name: rack-test
+    version: 0.7.0
+    user_install: no
+    state: present
+
+- name: install oxidized gems
+  gem:
+    name: "{{ item }}"
+    state: present
+    user_install: no
+  with_items:
+    - oxidized
+    - oxidized-script
+    - oxidized-web
+    - rugged
+
+- name: add oxidized user
+  user:
+    name: oxidized
+    system: yes
+
+- name: create oxidized directory
+  file:
+    path: /etc/oxidized
+    state: directory
+
+- name: get api token
+  command: >-
+    mysql --user={{ db_user }} --password={{ db_password }} librenms
+    -Bse "SELECT token_hash FROM api_tokens WHERE user_id=1 LIMIT 1"
+  register: api_admin_token
+
+- set_fact:
+    oxidized_api_token: "{{ api_admin_token.stdout }}" 
+
+- name: create oxidized config
+  template:
+    src: templates/config.j2
+    dest: /etc/oxidized/config
+
+- name: create oxidized service
+  template:
+    src: templates/oxidized.service.j2
+    dest: /etc/systemd/system/oxidized.service
+

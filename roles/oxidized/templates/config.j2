@@ -1,0 +1,41 @@
+---
+username: username
+password: password
+interval: 3600
+use_syslog: false
+debug: false
+threads: 30
+timeout: 20
+retries: 3
+prompt: !ruby/regexp /^([\w.@-]+[#>]\s?)$/
+rest: 127.0.0.1:8888
+next_adds_job: false
+vars: {}
+groups: {}
+models: {}
+pid: /home/oxidized/.config/oxidized/pid
+input:
+  default: ssh, telnet
+  debug: false
+  ssh:
+    secure: false
+output:
+  default: git
+  git:
+    user: Oxidized
+    email: oxidized@{{ inventory_hostname }}
+    repo: ~/router_configs/
+source:
+  default: http
+  debug: false
+  http:
+    url: http://{{ inventory_hostname }}/api/v0/oxidized
+    map:
+      name: hostname
+      model: os
+      group: group
+    headers:
+      X-Auth-Token: '{{ oxidized_api_token }}'
+model_map:
+  cisco: ios
+  juniper: junos

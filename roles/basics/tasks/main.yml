@@ -1,0 +1,15 @@
+---
+- name: install NetworkManager-tui package
+  package:
+    name: NetworkManager-tui
+    state: present
+
+- name: add motd
+  copy:
+    dest: /etc/motd
+    content: |
+      ****** Configuration tasks left: ******
+       - configure network settings with "nmtui"
+       - specify username/password in /etc/oxidized/config
+       - add devices to librenms
+       - enable oxidized service with "systemctl enable oxidized --now" 

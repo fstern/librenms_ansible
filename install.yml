@@ -1,0 +1,10 @@
+---
+- name: setup network monitor
+  hosts: all
+  remote_user: root
+  roles:
+    - basics
+    - librenms
+    - oxidized
+    - syslog
+

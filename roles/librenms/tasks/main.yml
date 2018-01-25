@@ -1,0 +1,196 @@
+---
+- name: install epel-release
+  package:
+    name: epel-release
+    state: present
+
+- name: install webtatic release
+  yum:
+    name: https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
+    state: present
+
+- name: install required packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - cronie
+    - fping
+    - git
+    - httpd
+    - ImageMagick
+    - jwhois
+    - mariadb
+    - mariadb-server
+    - memcached
+    - mtr
+    - MySQL-python
+    - net-snmp
+    - net-snmp-utils
+    - nmap
+    - php71w
+    - php71w-cli
+    - php71w-common
+    - php71w-curl
+    - php71w-gd
+    - php71w-mcrypt
+    - php71w-mysql
+    - php71w-process
+    - php71w-snmp
+    - php71w-xml
+    - php71w-zip
+    - python-memcached
+    - rrdtool
+
+- name: create librenms system user
+  user:
+    name: librenms
+    system: yes
+    home: /opt/librenms
+    createhome: no
+
+- name: add apache to librenms group
+  user:
+    name: apache
+    groups:
+      - librenms
+
+- name: deploy software
+  git:
+    repo: https://github.com/librenms/librenms.git
+    dest: /opt/librenms
+
+- name: change owner to librenms
+  file:
+    path: /opt/librenms
+    owner: librenms
+    group: librenms
+    recurse: true
+
+- name: make directories group writeable
+  file:
+    path: "/opt/librenms/{{ item }}"
+    owner: librenms
+    group: librenms
+    mode: 0775
+  with_items:
+    - logs
+    - rrd
+
+- name: create mysql server configuration
+  template:
+    src: templates/server.cnf.j2
+    dest: /etc/my.cnf.d/server.cnf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: start mysql daemon
+  service:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: create mysql database
+  mysql_db:
+    name: librenms
+    encoding: utf8
+    collation: utf8_unicode_ci
+
+- name: create librenms db user
+  mysql_user:
+    name: librenms
+    password: librenms
+    host: localhost
+    priv: 'librenms.*:ALL'
+    state: present
+
+- name: configure PHP
+  lineinfile:
+    path: /etc/php.ini
+    regexp: '^;date.timezone'
+    line: 'date.timezone = Europe/Berlin'
+
+- name: remove apache default config
+  file:
+    path: /etc/httpd/conf.d/welcome.conf
+    state: absent
+
+- name: add librenms apache config
+  template:
+    src: templates/librenms.conf.j2
+    dest: /etc/httpd/conf.d/librenms.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: enable and start apache
+  service:
+    name: httpd
+    state: started
+    enabled: true
+
+- name: enable librenms cronjob
+  copy:
+    src: /opt/librenms/librenms.nonroot.cron
+    dest: /etc/cron.d/librenms
+    remote_src: true
+    owner: root
+    group: root
+    mode: 0644
+
+- name: enable librenms logrotate
+  copy:
+    src: /opt/librenms/misc/librenms.logrotate
+    dest: /etc/logrotate.d/librenms
+    remote_src: true
+    owner: root
+    group: root
+    mode: 0644
+
+- name: generate librenms configuration
+  template:
+    src: templates/config.php.j2
+    dest: /opt/librenms/config.php
+    owner: librenms
+    group: librenms
+    mode: 0644
+
+- name: populate librenms database
+  command: /usr/bin/php /opt/librenms/discovery.php
+
+- name: add librenms admin user
+  command: "/usr/bin/php /opt/librenms/adduser.php {{ admin_user }} {{ admin_password }} 10 {{ admin_email }}"
+
+- name: get api token
+  command: >-
+    mysql --user={{ db_user }} --password={{ db_password }} librenms
+    -Bse "SELECT token_hash FROM api_tokens WHERE user_id=1 LIMIT 1"
+  register: api_admin_token
+
+- name: add admin api token
+  command: >-
+    mysql --user={{ db_user }} --password={{ db_password }} librenms
+    -e "INSERT INTO api_tokens (user_id,token_hash) VALUES (1, \"{{ admin_token }}\")
+        ON DUPLICATE KEY UPDATE token_hash=\"{{ admin_token }}\""
+  when: api_admin_token.stdout == ""
+
+- name: start and enable snmpd
+  service:
+    name: snmpd
+    state: started
+    enabled: true
+
+- name: check for localhost in librenms
+  command: >-
+    mysql --user={{ db_user }} --password={{ db_password }} librenms
+    -Bse "SELECT hostname FROM devices WHERE sysname like \"localhost%\" "
+  register: librenms_localhost_present
+
+- name: add host to librenms
+  command: >-
+    php /opt/librenms/addhost.php localhost
+  when: librenms_localhost_present == ""
+  
+
+
