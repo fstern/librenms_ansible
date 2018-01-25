@@ -1,2 +1,4 @@
 *.retry
 *~
+ansible_inventory
+ansible.cfg
