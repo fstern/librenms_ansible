@@ -42,6 +42,12 @@
     - python-memcached
     - rrdtool
 
+- name: start and enable memcached
+  service:
+    name: memcached 
+    state: started
+    enabled: yes
+
 - name: create librenms system user
   user:
     name: librenms
